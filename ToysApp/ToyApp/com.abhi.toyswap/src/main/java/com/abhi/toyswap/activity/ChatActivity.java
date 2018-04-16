@@ -87,17 +87,10 @@ public class ChatActivity extends AppCompatActivity implements View.OnClickListe
             secondUserId=this.getIntent().getStringExtra("SendersUserId");
             if(this.getIntent().getStringExtra("ItemUserId").equals(Utils.getDataFromSharedPreferences(this,"UserId"))){
                 isOtherItemsChatScreen=false;
-                Log.i("Abhi","If");
             }else{
                 isOtherItemsChatScreen=true;
-                Log.i("Abhi","Else");
             }
             secondUserImageUrl=this.getIntent().getStringExtra("SendersImageUrl");
-            Log.i("Abhi","Current User ID="+Utils.getDataFromSharedPreferences(this,"UserId"));
-            Log.i("Abhi","ItemNAme="+itemName);
-            Log.i("Abhi","ItemID="+itemId);
-            Log.i("Abhi","SecondUserID="+secondUserId);
-            Log.i("Abhi","isOtherItemsChatScreen="+isOtherItemsChatScreen);
         } else {
             itemName = this.getIntent().getStringExtra("ItemName");
             itemId = this.getIntent().getStringExtra("ItemId");
