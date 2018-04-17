@@ -2,13 +2,13 @@ package com.abhi.toyswap.Service;
 
 /**
  * Copyright 2016 Google Inc. All Rights Reserved.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,12 +45,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
     private static final String TAG = "Abhi";
-    public static String message="";
+    public static String message = "";
+    public static Map<String,String> messagesList=new HashMap<String,String>();
     public static final String BROADCAST_ACTION = "com.abhi.toyswap.activity.ChatActivity.refreshMessages";
 
     /**
@@ -79,20 +82,22 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         if (remoteMessage.getData().size() > 0) {
             Log.d(TAG, "Message data payload: " + remoteMessage.getData());
 
-
-
         }
 
         // Check if message contains a notification payload.
         if (remoteMessage.getNotification() != null) {
             Log.d(TAG, "Message Notification Body: " + remoteMessage.getNotification().getBody());
         }
-      if( isForeground()){
-          refreshUI(remoteMessage);
-      }else{
-          sendNotification(remoteMessage);
+        if (isForeground()) {
+            if (ChatActivity.itemId != null && ChatActivity.secondUserId != null && ChatActivity.itemId.equals(remoteMessage.getData().get("itemId")) && (ChatActivity.secondUserId.equals(remoteMessage.getData().get("senderUserid")))) {
+                refreshUI(remoteMessage);
+            } else {
+                sendNotification(remoteMessage);
+            }
+        } else {
+            sendNotification(remoteMessage);
 
-      }
+        }
 
         // Also if you intend on generating your own notifications as a result of a received FCM
         // message, here is where that should be initiated. See sendNotification method below.
@@ -100,20 +105,21 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
     // [END receive_message]
 
 
-    public void refreshUI(RemoteMessage messageBody){
+    public void refreshUI(RemoteMessage messageBody) {
         Intent intent = new Intent(BROADCAST_ACTION);
         intent.putExtra("notificationId", 0);
-        intent.putExtra("IsFromNotification",true);
-        intent.putExtra("ItemId",messageBody.getData().get("itemId"));
-        intent.putExtra("ItemName",messageBody.getData().get("itemName"));
+        intent.putExtra("IsFromNotification", true);
+        intent.putExtra("ItemId", messageBody.getData().get("itemId"));
+        intent.putExtra("ItemName", messageBody.getData().get("itemName"));
 
-        intent.putExtra("ItemUserId",messageBody.getData().get("itemUserid"));
+        intent.putExtra("ItemUserId", messageBody.getData().get("itemUserid"));
 
-        intent.putExtra("SendersUserId",messageBody.getData().get("senderUserid"));
-        intent.putExtra("SendersImageUrl",messageBody.getData().get("largeIcon"));
-        intent.putExtra("ChatData",intent.getExtras());
+        intent.putExtra("SendersUserId", messageBody.getData().get("senderUserid"));
+        intent.putExtra("SendersImageUrl", messageBody.getData().get("largeIcon"));
+        intent.putExtra("ChatData", intent.getExtras());
         sendBroadcast(intent);
     }
+
     /**
      * Create and show a simple notification containing the received FCM message.
      *
@@ -124,42 +130,46 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         Intent intent = new Intent(getApplicationContext(), DashboardActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         intent.putExtra("notificationId", 0);
-        intent.putExtra("IsFromNotification",true);
-        intent.putExtra("ItemId",messageBody.getData().get("itemId"));
-        intent.putExtra("ItemName",messageBody.getData().get("itemName"));
-        Log.i("Abhi","USerID of owner="+messageBody.getData().get("itemUserid"));
-        intent.putExtra("ItemUserId",messageBody.getData().get("itemUserid"));
-
-        intent.putExtra("SendersUserId",messageBody.getData().get("senderUserid"));
-        intent.putExtra("SendersImageUrl",messageBody.getData().get("largeIcon"));
-        PendingIntent pendingIntent= PendingIntent.getActivity(getApplicationContext(), 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        intent.setAction(messageBody.getData().get("senderUserid"));
+        intent.putExtra("IsFromNotification", true);
+        intent.putExtra("ItemId", messageBody.getData().get("itemId"));
+        intent.putExtra("ItemName", messageBody.getData().get("itemName"));
+        Log.i("Abhi", "USerID of Sender=" + messageBody.getData().get("senderUserid"));
+        intent.putExtra("ItemUserId", messageBody.getData().get("itemUserid"));
+        intent.putExtra("SendersUserId", messageBody.getData().get("senderUserid"));
+        intent.putExtra("SendersImageUrl", messageBody.getData().get("largeIcon"));
+        PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(), 0, intent, PendingIntent.FLAG_IMMUTABLE);
 
         String channelId = getString(R.string.app_title);
-        Uri defaultSoundUri= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+        Uri defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext());
         builder.setSmallIcon(R.drawable.app_icon);
         builder.setSound(defaultSoundUri);
-        builder.setVibrate(new long[] { 1000, 1000});
+        builder.setVibrate(new long[]{1000, 1000});
 
         builder.setLargeIcon(getBitmapFromURL(messageBody.getData().get("largeIcon")));
         builder.setContentTitle(messageBody.getData().get("title"));
-        if(message.isEmpty()){
-            message=messageBody.getData().get("message")+"\n";
+        String userMessages=messagesList.get(messageBody.getData().get("senderUserid"));
 
-        }else{
-            message=message+"\n"+messageBody.getData().get("message")+"\n";
+        Log.i("Abhi","UserMessages="+userMessages);
+        if (userMessages==null) {
+            userMessages = messageBody.getData().get("message") ;
+
+        } else {
+            userMessages = userMessages + "\n" + messageBody.getData().get("message") + "\n";
 
         }
-        builder.setStyle(new NotificationCompat.BigTextStyle().bigText(message));
-        builder.setContentText(message);
+        messagesList.put(messageBody.getData().get("senderUserid"),userMessages);
+
+        builder.setStyle(new NotificationCompat.BigTextStyle().bigText(userMessages));
+        builder.setContentText(userMessages);
         builder.setContentIntent(pendingIntent);
         builder.setAutoCancel(true);
-       // builder.setStyle(new NotificationCompat.MessagingStyle(messageBody.getData().get("title")).setConversationTitle("Q&A Group")
+        // builder.setStyle(new NotificationCompat.MessagingStyle(messageBody.getData().get("title")).setConversationTitle("Q&A Group")
         //        .addMessage(messageBody.getData().get("message"),0,messageBody.getData().get("title")));
         NotificationManager notificationManager =
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-
         // Since android Oreo notification channel is needed.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(channelId,
@@ -168,10 +178,11 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
             notificationManager.createNotificationChannel(channel);
         }
 
-       // Notification notification=builder.build();
-       // notification.flags |= Notification.FLAG_AUTO_CANCEL;
-        notificationManager.notify(0 /* ID of notification */, builder.build());
+        // Notification notification=builder.build();
+        // notification.flags |= Notification.FLAG_AUTO_CANCEL;
+        notificationManager.notify(Integer.parseInt(messageBody.getData().get("senderUserid")) /* ID of notification */, builder.build());
     }
+
     public static Bitmap getBitmapFromURL(String src) {
         try {
             URL url = new URL(src);
@@ -186,17 +197,18 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
             return null;
         }
     }
+
     public boolean isForeground() {
         try {
             ActivityManager manager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
             List<ActivityManager.RunningTaskInfo> runningTaskInfo = manager.getRunningTasks(1);
             ComponentName componentInfo = runningTaskInfo.get(0).topActivity;
             return componentInfo.getClassName().equals("com.abhi.toyswap.activity.ChatActivity");
-        }catch (Exception e){
+        } catch (Exception e) {
             return false;
         }
-     //   Log.i("Abhi","Class name="+componentInfo.getClassName());
-     //   Log.i("Abhi","PAckage Name="+componentInfo.getPackageName());
-       // return componentInfo.getPackageName().equals(myPackage);
+        //   Log.i("Abhi","Class name="+componentInfo.getClassName());
+        //   Log.i("Abhi","PAckage Name="+componentInfo.getPackageName());
+        // return componentInfo.getPackageName().equals(myPackage);
     }
 }

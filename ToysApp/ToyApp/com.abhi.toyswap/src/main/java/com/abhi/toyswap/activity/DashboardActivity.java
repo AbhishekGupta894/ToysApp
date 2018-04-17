@@ -1,6 +1,7 @@
 package com.abhi.toyswap.activity;
 
 import android.app.FragmentManager;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -28,6 +29,7 @@ import com.ittianyu.bottomnavigationviewex.BottomNavigationViewEx;
 public class DashboardActivity extends AppCompatActivity {
 
     BottomNavigationViewEx bottomNavigationView;
+    NotificationManager notificationManager ;
 
 
     @Override
@@ -36,7 +38,10 @@ public class DashboardActivity extends AppCompatActivity {
         ActionBar actionBar = getSupportActionBar();
         actionBar.hide();
         MyFirebaseMessagingService.message = "";
-
+        MyFirebaseMessagingService.messagesList.clear();
+        notificationManager =
+                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.cancelAll();
         setContentView(R.layout.activity_dashboard);
         bottomNavigationView = (BottomNavigationViewEx) this.findViewById(R.id.bottom_navigation);
         bottomNavigationView.enableAnimation(false);
@@ -96,6 +101,7 @@ public class DashboardActivity extends AppCompatActivity {
             chatActivityIntent.putExtra("ItemUserId",this.getIntent().getStringExtra("ItemUserId"));
 
             chatActivityIntent.putExtra("SendersUserId",this.getIntent().getStringExtra("SendersUserId"));
+            Log.i("Abhi","SendersUserId="+this.getIntent().getStringExtra("SendersUserId"));
             chatActivityIntent.putExtra("SendersImageUrl",this.getIntent().getStringExtra("SendersImageUrl"));
 
             startActivity(chatActivityIntent);

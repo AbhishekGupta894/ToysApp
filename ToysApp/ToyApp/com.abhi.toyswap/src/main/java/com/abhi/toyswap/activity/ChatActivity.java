@@ -51,9 +51,9 @@ public class ChatActivity extends AppCompatActivity implements View.OnClickListe
 
     private RecyclerView messagesRecyclerView;
     private String itemName;
-    private String itemId;
+    public static String itemId;
     private String itemImageUrl;
-    private String secondUserId;
+    public static String secondUserId;
     private String secondUserImageUrl;
     private TextView titleTextView;
     private ImageView backImageView;
